@@ -41,7 +41,7 @@ class ISendClient
         $headers = [
             'Authorization: Bearer ' . $this->apiKey,
             'Content-Type: application/json',
-            'User-Agent: isend-php-sdk/1.0.0'
+            'User-Agent: isend-ai-php-sdk/1.0.0'
         ];
         
         $ch = curl_init();

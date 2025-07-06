@@ -1,5 +1,5 @@
 {
-    "name": "isend/php-sdk",
+    "name": "isend-ai/php-sdk",
     "description": "PHP SDK for isend.ai - Send emails easily using email connectors like SES, SendGrid, and more",
     "type": "library",
     "license": "MIT",

@@ -5,7 +5,7 @@ A simple PHP SDK for sending emails through isend.ai using various email connect
 ## Installation
 
 ```bash
-composer require isend/php-sdk
+composer require isend-ai/php-sdk
 ```
 
 ## Quick Start

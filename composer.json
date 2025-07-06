@@ -1,0 +1,53 @@
+{
+    "name": "isend/php-sdk",
+    "description": "PHP SDK for isend.ai - Send emails easily using email connectors like SES, SendGrid, and more",
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "isend",
+        "email",
+        "sdk",
+        "ses",
+        "sendgrid",
+        "mailgun",
+        "postmark"
+    ],
+    "authors": [
+        {
+            "name": "isend.ai",
+            "email": "support@isend.ai"
+        }
+    ],
+    "require": {
+        "php": ">=5.6",
+        "ext-json": "*",
+        "ext-curl": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^5.0",
+        "squizlabs/php_codesniffer": "^2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "ISend\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "ISend\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "test-coverage": "phpunit --coverage-html coverage",
+        "phpstan": "phpstan analyse",
+        "cs-check": "phpcs",
+        "cs-fix": "phpcbf"
+    },
+    "config": {
+        "sort-packages": true,
+        "optimize-autoloader": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+} 

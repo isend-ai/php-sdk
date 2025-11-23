@@ -232,4 +232,6 @@ class ISendClient
     {
         return $this->sendTelegramTemplate($email, $templateId, $dataMapping, $connectorId);
     }
+
+    // here we need to add the api to send the whatsapp messsage also
 }

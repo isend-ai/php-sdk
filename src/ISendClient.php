@@ -156,25 +156,25 @@ class ISendClient
      * POST /api/telegram/send-template
      * 
      * @param string $email Customer's email address (must be connected to Telegram bot)
-     * @param int $templateId Template ID from isend.ai
+     * @param string $templateVariable Template variable name from isend.ai
      * @param array $dataMapping Key-value pairs for template variables (optional, can be empty)
      * @param int|null $connectorId Optional connector_id if multiple connectors exist
      * @return array|null Response from isend.ai API or null on error
      */
-    public function sendTelegramTemplate(string $email, int $templateId, array $dataMapping = [], ?int $connectorId = null): ?array
+    public function sendTelegramTemplate(string $email, string $templateVariable, array $dataMapping = [], ?int $connectorId = null): ?array
     {
         if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             error_log("ISendClient: valid email is required");
             return null;
         }
 
-        if (empty($templateId) || !is_numeric($templateId)) {
-            error_log("ISendClient: valid template_id is required");
+        if (empty($templateVariable) || !is_string($templateVariable)) {
+            error_log("ISendClient: valid template variable is required");
             return null;
         }
 
         $data = [
-            'template_id' => (int)$templateId,
+            'template' => $templateVariable,
             'email' => $email,
             'data_mapping' => $dataMapping,
             // Also add dataMapping for compatibility
@@ -185,7 +185,7 @@ class ISendClient
             $data['connector_id'] = (int)$connectorId;
         }
 
-        return $this->makeRequest('/api/telegram/send-template', $data, "Send Telegram Template (template_id: {$templateId}, email: {$email})");
+        return $this->makeRequest('/api/telegram/send-template', $data, "Send Telegram Template (template: {$templateVariable}, email: {$email})");
     }
 
     /**
@@ -228,8 +228,8 @@ class ISendClient
      * 
      * @deprecated Use sendTelegramTemplate() instead
      */
-    public function sendTemplateByEmail(string $email, int $templateId, array $dataMapping = [], ?int $connectorId = null): ?array
+    public function sendTemplateByEmail(string $email, string $templateVariable, array $dataMapping = [], ?int $connectorId = null): ?array
     {
-        return $this->sendTelegramTemplate($email, $templateId, $dataMapping, $connectorId);
+        return $this->sendTelegramTemplate($email, $templateVariable, $dataMapping, $connectorId);
     }
 }

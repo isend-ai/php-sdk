@@ -16,11 +16,15 @@ $client->sendEmail(11, 'devmanoharrr@gmail.com', [
 ]);
 
 // Send Telegram Template
-$client->sendTelegramTemplate('devmanoharrr@gmail.com', 1, [
-    'user_name' => 'Manohar',
-    'time' => date('Y-m-d H:i:s'),
-    'user_type' => 'Planner'
-]);
+$client->sendTelegramTemplate(
+    "customer@example.com",
+    "template_variable",
+    [
+        "user_name" => "John Doe",
+        "time" => date("Y-m-d H:i:s"),
+        "user_type" => "Planner"
+    ]
+);
 
 // Send Event
 $client->sendEvent(3, 'devmanoharrr@gmail.com', [

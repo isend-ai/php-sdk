@@ -5,7 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 2024-01-XX
+## [1.1.0] - 2025-11-29
+
+### Changed
+- `sendTelegramTemplate()` now accepts a template variable (string) instead of template ID (int)
+- `sendTemplateByEmail()` (deprecated) updated to match the new signature
+- API request now sends `template` parameter instead of `template_id` for Telegram templates
+
+## [1.0.0] - 2025-07-12
 
 ### Added
 - Initial release of isend.ai PHP SDK

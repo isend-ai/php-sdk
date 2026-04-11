@@ -6,6 +6,7 @@
     "keywords": [
         "isend",
         "email",
+        "telegram",
         "sdk",
         "ses",
         "sendgrid",

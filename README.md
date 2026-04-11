@@ -2,6 +2,8 @@
 
 A simple PHP SDK for sending emails, Telegram messages, and events through isend.ai using various email connectors like AWS SES, SendGrid, Mailgun, and more.
 
+For **linking customers to your Telegram bot** (start flow, claim URL, polling status), use `ISendTelegramConnectorClient` with the connector **`api_secret_token`** from the iSend dashboard. For **sending Telegram templates** with your account API key, use `ISendClient::sendTelegramTemplate()` as below.
+
 ## Installation
 
 ```bash
@@ -17,7 +19,7 @@ require_once 'vendor/autoload.php';
 
 use ISend\ISendClient;
 
-// Initialize the client (API key can also be set via ISEND_API_KEY environment variable)
+// Initialize with your isend.ai API key (or ISEND_API_KEY env var)
 $client = new ISendClient('your-api-key-here');
 
 // Send email using template
@@ -62,6 +64,8 @@ $response = $client->sendEmail(
 
 ### Send Telegram Message Using Template
 
+Uses your **account API key** (`ISendClient`). The customer must already be connected to your Telegram bot.
+
 ```php
 $response = $client->sendTelegramTemplate(
     'customer@example.com',  // email (required) - must be connected to Telegram bot
@@ -73,6 +77,40 @@ $response = $client->sendTelegramTemplate(
     ]
 );
 ```
+
+### Telegram bot linking (Start flow)
+
+Use **`ISendTelegramConnectorClient`** with the connector **`api_secret_token`** from the iSend dashboard. Requests are authenticated with the `X-ISEND-TELEGRAM-SECRET` header, not `api_key` in the JSON body.
+
+Base URL follows the same rules as `ISendClient`: optional constructor argument, else `ISEND_API_BASE_URL`, else `https://www.isend.ai`.
+
+```php
+use ISend\ISendTelegramConnectorClient;
+
+$tg = new ISendTelegramConnectorClient('your-connector-api-secret-token');
+
+// POST /api/telegram/start — returns claim_url (or already_connected), includes _http_code on success
+$start = $tg->telegramStart(
+    'customer@example.com',  // email (recommended)
+    null,                   // user_id (optional)
+    null,                   // session_id (optional UUID)
+    false                   // force_new_link (optional)
+);
+
+// After the user opens the claim link and taps Start in Telegram, poll status:
+// POST /api/telegram/start/status — requires at least one of session_id, email, or tg_customer_id
+$status = $tg->telegramStartStatus(
+    $start['session_id'] ?? null,
+    'customer@example.com',
+    null  // or tg_customer_id when you have it
+);
+
+if (ISendTelegramConnectorClient::isOkResponse($status)) {
+    // Linked or in expected state — inspect API payload for details
+}
+```
+
+On transport failure, `telegramStart()` / `telegramStartStatus()` return `null`. On HTTP responses with valid JSON, you get an array that includes `_http_code` (and often `success`). Invalid JSON from the server is surfaced as an array with `success` false and a message, not `null`. Use `ISendTelegramConnectorClient::isOkResponse()` to treat 2xx and optional `success` in a consistent way.
 
 ### Send Event
 
@@ -93,6 +131,39 @@ $response = $client->sendEvent(
 
 ## API Reference
 
+### ISendTelegramConnectorClient
+
+Connector-scoped client for Telegram **start / link** APIs. Does not use `ISendClient` or the account API key.
+
+#### Constructor
+
+```php
+new ISendTelegramConnectorClient(string $apiSecretToken, ?string $baseUrl = null)
+```
+
+**Parameters:**
+
+- `$apiSecretToken` (string): Connector `api_secret_token` from the iSend dashboard. Empty or whitespace-only values throw `InvalidArgumentException`.
+- `$baseUrl` (string|null): API base URL; if omitted, uses `ISEND_API_BASE_URL` or `https://www.isend.ai`.
+
+#### Methods
+
+##### telegramStart(?string $email = null, ?string $userId = null, ?string $sessionId = null, bool $forceNewLink = false): ?array
+
+`POST /api/telegram/start`. Begins the connect flow.
+
+**Returns:** Decoded JSON including `_http_code` on normal API responses, or `null` on transport failure.
+
+##### telegramStartStatus(?string $sessionId = null, ?string $email = null, int|string|null $tgCustomerId = null): ?array
+
+`POST /api/telegram/start/status`. Polls after the user completes the flow in Telegram. At least one of `session_id`, `email`, or `tg_customer_id` should be set to match your integration.
+
+**Returns:** Same semantics as `telegramStart()`.
+
+##### isOkResponse(?array $response): bool (static)
+
+Returns whether the response looks successful: HTTP code in the 2xx range (from `_http_code`, defaulting to 200 if missing) and, if the body includes a `success` key, that value is truthy.
+
 ### ISendClient
 
 #### Constructor
@@ -108,12 +179,12 @@ Creates a new ISendClient instance.
 
 #### Methods
 
-##### sendEmail(int $templateId, string $to, array $dataMapping = [], ?string $from = null, ?int $eventId = null): ?array
+##### sendEmail(int|string $templateIdOrName, string $to, array $dataMapping = [], ?string $from = null, ?int $eventId = null): ?array
 
 Sends an email using the provided template.
 
 **Parameters:**
-- `$templateId` (int): Template ID from isend.ai
+- `$templateIdOrName` (int|string): Template ID (numeric) or template name (string) from isend.ai
 - `$to` (string): Recipient email address
 - `$dataMapping` (array): Key-value pairs for template variables (optional)
 - `$from` (string|null): Sender email address (optional, defaults to noreply@isend.ai)
@@ -146,7 +217,9 @@ Sends an event that triggers multiple messages (email and/or Telegram).
 
 ## Error Handling
 
-The SDK uses `error_log()` for error reporting and returns `null` on errors. Check the return value:
+### ISendClient
+
+`ISendClient` uses `error_log()` for error reporting and returns `null` on errors (including non-200 HTTP responses). Check the return value:
 
 ```php
 $response = $client->sendEmail(124, 'recipient@example.com', [
@@ -162,11 +235,11 @@ if ($response === null) {
 }
 ```
 
-Errors are logged with descriptive messages. Common errors include:
-- Missing or invalid API key
-- Invalid email addresses
-- Invalid template ID or template variable
-- Network/HTTP errors
+Common issues include missing or invalid API key, invalid email addresses, invalid template identifiers, and network or HTTP errors.
+
+### ISendTelegramConnectorClient
+
+Returns `null` only on transport-level failures (for example cURL errors). JSON responses include `_http_code` even when the HTTP status is not 2xx. Use `ISendTelegramConnectorClient::isOkResponse()` for a simple success check, or inspect `_http_code` and the API body yourself.
 
 ## Examples
 
